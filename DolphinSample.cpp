@@ -261,6 +261,17 @@ void Sample::Update(DX::StepTimer const& timer)
 		// Once implemented, this key will activate wireframe mode.
 	}
 
+    // 更新FPS
+    m_fpsFrameCount++;
+    m_fpsUpdateTimer += elapsedTime;
+
+    if (m_fpsUpdateTimer >= 0.5f) // 每0.5秒更新一次FPS显示
+    {
+        uint32_t fps = static_cast<uint32_t>(m_fpsFrameCount / m_fpsUpdateTimer);
+        swprintf_s(m_fpsText, L"FPS: %u", fps);
+        m_fpsFrameCount = 0;
+        m_fpsUpdateTimer = 0.0f;
+    }
 }
 #pragma endregion
 
@@ -313,6 +324,9 @@ void Sample::Render()
     ////////////////////////////////////////////////////
     for (unsigned int i = 0; i < m_dolphins.size(); i++)
         DrawDolphin(*m_dolphins[i].get());
+
+    // 渲染FPS文本
+    RenderFPS();
 
     // Show the new frame.
     m_deviceResources->Present();
@@ -497,6 +511,23 @@ void Sample::CreateDeviceDependentResources()
     //m_matProj = XMMatrixPerspectiveFovLH(XM_PI / 3, (float(size.right) / float(size.bottom)), 1.0f, 10000.0f);
 	//m_matProj = XMMatrixPerspectiveFovLH(XM_PI / 3, fAspectRatio, 1.0f, 10000.0f);
 
+    m_spriteBatch = std::make_unique<SpriteBatch>(context);
+
+    // load font file
+    try
+    {
+        m_spriteFont = std::make_unique<SpriteFont>(device, L"Assets\\SegoeUI_24.spritefont");
+    }
+    catch (...)
+    {
+        // if not exist, use system font
+        m_spriteFont = std::make_unique<SpriteFont>(device, L"Segoe UI", 24);
+    }
+
+    // initialize
+    m_fpsUpdateTimer = 0.0f;
+    m_fpsFrameCount = 0;
+    wcscpy_s(m_fpsText, L"FPS: 0");
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
@@ -506,6 +537,12 @@ void Sample::CreateWindowSizeDependentResources()
 	//This is actually where we generate the aspect ratio.
 	m_matProj = XMMatrixPerspectiveFovLH(XM_PI / 3, (float(size.right) / float(size.bottom)), 1.0f, 10000.0f);
 	XMFLOAT4X4 orient = m_deviceResources->GetOrientationTransform3D();
+
+    // 更新SpriteBatch的视口
+    if (m_spriteBatch)
+    {
+        m_spriteBatch->SetViewport(m_deviceResources->GetScreenViewport());
+    }
 }
 #pragma endregion
 
@@ -577,4 +614,44 @@ void Sample::DrawDolphin(Dolphin &dolphin)
 
 	context->VSSetConstantBuffers(0, 1, m_VSConstantBuffer.GetAddressOf());
 	dolphin.Render(context, m_pixelShader.Get(), m_causticTextureViews[m_currentCausticTextureView].Get());
+}
+
+// DolphinSample.cpp 中添加辅助函数
+void Sample::RenderFPS()
+{
+    if (!m_spriteBatch || !m_spriteFont)
+        return;
+
+    auto context = m_deviceResources->GetD3DDeviceContext();
+
+    // 保存当前状态
+    ID3D11RenderTargetView* oldRTV = nullptr;
+    ID3D11DepthStencilView* oldDSV = nullptr;
+    context->OMGetRenderTargets(1, &oldRTV, &oldDSV);
+
+    // 设置渲染目标
+    auto renderTarget = m_deviceResources->GetRenderTargetView();
+    auto depthStencil = m_deviceResources->GetDepthStencilView();
+    context->OMSetRenderTargets(1, &renderTarget, depthStencil);
+
+    // 开始绘制
+    m_spriteBatch->Begin();
+
+    // 在左上角绘制FPS文本，带黑色阴影以增加可读性
+    XMVECTOR textPosition = XMVectorSet(20.0f, 20.0f, 0.0f, 0.0f);
+    XMVECTOR shadowOffset = XMVectorSet(1.0f, 1.0f, 0.0f, 0.0f);
+
+    // 绘制阴影
+    m_spriteFont->DrawString(m_spriteBatch.get(), m_fpsText, textPosition + shadowOffset, DirectX::Colors::Black);
+
+    // 绘制主文本
+    m_spriteFont->DrawString(m_spriteBatch.get(), m_fpsText, textPosition, DirectX::Colors::White);
+
+    m_spriteBatch->End();
+
+    // 恢复状态
+    context->OMSetRenderTargets(1, &oldRTV, oldDSV);
+
+    if (oldRTV) oldRTV->Release();
+    if (oldDSV) oldDSV->Release();
 }

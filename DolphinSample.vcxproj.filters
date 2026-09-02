@@ -45,6 +45,9 @@
     <None Include="Assets\mesh\seafloor.sdkmesh">
       <Filter>Assets\mesh</Filter>
     </None>
+    <None Include="DolphinSample_TemporaryKey.pfx" />
+    <None Include="Assets\SegoeUI_18.spritefont" />
+    <None Include="Assets\SegoeUI_24.spritefont" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Shaders">
@@ -74,9 +77,6 @@
       <Filter>Assets</Filter>
     </Image>
     <Image Include="Assets\StoreLogo.png">
-      <Filter>Assets</Filter>
-    </Image>
-    <Image Include="Assets\WideLogo.png">
       <Filter>Assets</Filter>
     </Image>
     <Image Include="Assets\textures\caust00.DDS">

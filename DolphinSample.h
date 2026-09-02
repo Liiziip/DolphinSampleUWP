@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "SpriteFont.h"
+#include "SpriteBatch.h"
 #include "DeviceResources.h"
 #include "StepTimer.h"
 #include "Dolphin.h"
@@ -50,6 +52,7 @@ public:
 
 private:
 
+    void RenderFPS();
     void Update(DX::StepTimer const& timer);
     void Render();
 
@@ -95,7 +98,7 @@ private:
     DirectX::SimpleMath::Matrix                     m_matProj;
                                                      
     // array of dolphins                             
-    std::array<std::shared_ptr<Dolphin>, 4>         m_dolphins;
+    std::array<std::shared_ptr<Dolphin>, 1>         m_dolphins;
 
     // Seafloor object
     std::unique_ptr<DirectX::Model>                 m_seafloor;
@@ -114,4 +117,11 @@ private:
     // Shader resource view for the whole screen
     // This is the input to the FrontPanelRender target
     Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_mainRenderTargetSRV;
+
+    // FPS Display
+    std::unique_ptr<DirectX::SpriteBatch>          m_spriteBatch;
+    std::unique_ptr<DirectX::SpriteFont>           m_spriteFont;
+    wchar_t                                        m_fpsText[32];
+    float                                          m_fpsUpdateTimer;
+    uint32_t                                       m_fpsFrameCount;
 };

@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities" IgnorableNamespaces="uap mp rescap">
   <mp:PhoneIdentity PhoneProductId="871c13cc-5f83-41de-8003-e9afbb6a6533" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
-  <Identity Name="871c13cc-5f83-41de-8003-e9afbb6a6533" Publisher="CN=jthecodebuilder" Version="1.0.0.0" />
+  <Identity Name="871c13cc-5f83-41de-8003-e9afbb6a6533" Publisher="CN=ZIP" Version="2.0.0.0" />
   <Properties>
     <DisplayName>DolphinSampleUWP</DisplayName>
     <PublisherDisplayName>jthecodebuilder, Joshua-Ashton &amp; contrib. Originally by Xbox ATG</PublisherDisplayName>
@@ -17,9 +17,8 @@
   <Applications>
     <Application Id="Game" Executable="$targetnametoken$.exe" EntryPoint="DolphinSampleUWP.App">
       <uap:VisualElements DisplayName="DolphinSampleUWP" Square150x150Logo="Assets\Logo.png" Square44x44Logo="Assets\SmallLogo.png" Description="Classic Xbox XDK sample where there's dolphins (four of them) frenzily swimming around. (Unofficial) Port to UWP by jthecodebuilder, based on the Win32(Desktop) port by Joshua-Ashton, and in turn based on the public Xbox-ATG-Samples version. Originally coded by Xbox ATG/Microsoft." BackgroundColor="#000000">
-        <uap:DefaultTile Wide310x150Logo="Assets\WideLogo.png">
-        </uap:DefaultTile>
         <uap:SplashScreen Image="Assets\SplashScreen.png" />
+        <uap:DefaultTile/>
       </uap:VisualElements>
     </Application>
   </Applications>
