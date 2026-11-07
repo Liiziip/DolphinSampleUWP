@@ -17,10 +17,18 @@
 
 #include <wrl.h>
 
+#include <intrin.h>          // 用于 __cpuid
+#include <string>
+#include <sstream>
+#include <iomanip>
 #include <d3d11_3.h>
 #include <dxgi1_6.h>
 #include <DirectXMath.h>
 #include <DirectXColors.h>
+
+// UWP 系统信息 API
+#include <windows.system.profile.h>
+#include <windows.system.h>
 
 #include <algorithm>
 #include <array>

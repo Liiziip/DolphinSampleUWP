@@ -1,7 +1,7 @@
 ﻿//
 // DeviceResources.h - A wrapper for the Direct3D 11 device and swapchain
 //
-
+#include <string>
 #pragma once
 
 namespace DX
@@ -60,6 +60,7 @@ namespace DX
         DirectX::XMFLOAT4X4     GetOrientationTransform3D() const     { return m_orientationTransform3D; }
         DXGI_COLOR_SPACE_TYPE   GetColorSpace() const                 { return m_colorSpace; }
         unsigned int            GetDeviceOptions() const              { return m_options; }
+        std::wstring            GetGPUName() const;
 
     private:
         void GetHardwareAdapter(IDXGIAdapter1** ppAdapter);

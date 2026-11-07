@@ -53,6 +53,8 @@ public:
 private:
 
     void RenderFPS();
+    void RenderCPUInfo();           // 新增
+    void InitializeCPUInfo();       // 新增
     void Update(DX::StepTimer const& timer);
     void Render();
 
@@ -122,6 +124,19 @@ private:
     std::unique_ptr<DirectX::SpriteBatch>          m_spriteBatch;
     std::unique_ptr<DirectX::SpriteFont>           m_spriteFont;
     wchar_t                                        m_fpsText[32];
+    wchar_t                                        m_resText[64];
     float                                          m_fpsUpdateTimer;
     uint32_t                                       m_fpsFrameCount;
+    bool                                           m_fpsEnabled;
+
+    // CPU 信息显示
+    wchar_t                                        m_cpuText[256]; 
+    wchar_t                                        m_gpuText[256];
+    wchar_t                                        m_archText[64];       
+    wchar_t                                        m_osText[128];
+    DirectX::SimpleMath::Vector2                   m_cpuTextSize; 
+    DirectX::SimpleMath::Vector2                   m_gpuTextSize;
+    DirectX::SimpleMath::Vector2                   m_archTextSize;
+
+    bool                                           m_isArmPlatform;    // 标记当前是否是 ARM 平台
 };

@@ -6,6 +6,7 @@
 
 #include "pch.h"
 #include "DeviceResources.h"
+#include <string>
 
 using namespace DirectX;
 using namespace DX;
@@ -740,3 +741,59 @@ void DeviceResources::UpdateColorSpace()
         ThrowIfFailed(m_swapChain->SetColorSpace1(colorSpace));
     }
 }
+
+// DeviceResources.cpp - 添加实现
+
+std::wstring DeviceResources::GetGPUName() const
+{
+    std::wstring result = L"Unknown GPU";
+
+    if (!m_dxgiFactory)
+        return result;
+
+    // 优先用 GetHardwareAdapter 那套逻辑：跳过软件适配器
+    ComPtr<IDXGIAdapter1> adapter;
+
+#if defined(__dxgi1_6_h__) && defined(NTDDI_WIN10_RS4)
+    ComPtr<IDXGIFactory6> factory6;
+    if (SUCCEEDED(m_dxgiFactory.As(&factory6)))
+    {
+        for (UINT i = 0;
+            SUCCEEDED(factory6->EnumAdapterByGpuPreference(
+                i,
+                DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE,
+                IID_PPV_ARGS(adapter.ReleaseAndGetAddressOf())));
+            i++)
+        {
+            DXGI_ADAPTER_DESC1 desc = {};
+            if (FAILED(adapter->GetDesc1(&desc)))
+                continue;
+
+            if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+                continue;   // 跳过 WARP / 软件适配器
+
+            result = desc.Description;
+            return result;
+        }
+    }
+#endif
+
+    // 回退：普通枚举
+    for (UINT i = 0;
+        SUCCEEDED(m_dxgiFactory->EnumAdapters1(i, adapter.ReleaseAndGetAddressOf()));
+        i++)
+    {
+        DXGI_ADAPTER_DESC1 desc = {};
+        if (FAILED(adapter->GetDesc1(&desc)))
+            continue;
+
+        if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+            continue;
+
+        result = desc.Description;
+        return result;
+    }
+
+    return result;
+}
+
