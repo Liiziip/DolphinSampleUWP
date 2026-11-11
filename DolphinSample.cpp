@@ -179,6 +179,9 @@ Sample::Sample() noexcept(false)
 {
     m_deviceResources = std::make_unique<DX::DeviceResources>();
 
+    m_dolphinCount = 1;
+    m_pressedButton = 0;
+
     // Create the dolphins
     for (unsigned int i = 0; i < m_dolphins.size(); i++)
     {
@@ -239,7 +242,7 @@ void Sample::Update(DX::StepTimer const& timer)
 	float totalTime = float(timer.GetTotalSeconds());
 
 	// Update all the dolphins
-	for (unsigned int i = 0; i < m_dolphins.size(); i++)
+	for (unsigned int i = 0; i < m_dolphinCount; i++)
 		m_dolphins[i]->Update(totalTime, elapsedTime);
 
 	SetWaterColor(0.0f, 0.5f, 1.0f);
@@ -366,6 +369,9 @@ void Sample::Update(DX::StepTimer const& timer)
     swprintf_s(m_resText, L"Resolution: %ld x %ld",
         outputSize.right - outputSize.left,
         outputSize.bottom - outputSize.top);
+
+    // 更新海豚数量文本
+    swprintf_s(m_dolphinText, L"Dolphins: %u", m_dolphinCount);
 }
 #pragma endregion
 
@@ -416,7 +422,7 @@ void Sample::Render()
     // Render Dolphins  
     //
     ////////////////////////////////////////////////////
-    for (unsigned int i = 0; i < m_dolphins.size(); i++)
+    for (unsigned int i = 0; i < m_dolphinCount; i++)
         DrawDolphin(*m_dolphins[i].get());
 
     // 渲染FPS文本
@@ -627,6 +633,39 @@ void Sample::CreateDeviceDependentResources()
     wcscpy_s(m_fpsText, L"FPS: 0");
     wcscpy_s(m_resText, L"0 x 0");
 
+    // 按钮用的 1x1 白色纹理
+    {
+        const uint32_t white = 0xFFFFFFFFu;
+        D3D11_SUBRESOURCE_DATA initData = {};
+        initData.pSysMem = &white;
+        initData.SysMemPitch = static_cast<UINT>(sizeof(white));
+
+        D3D11_TEXTURE2D_DESC desc = {};
+        desc.Width = 1;
+        desc.Height = 1;
+        desc.MipLevels = 1;
+        desc.ArraySize = 1;
+        desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        desc.SampleDesc.Count = 1;
+        desc.Usage = D3D11_USAGE_IMMUTABLE;
+        desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+
+        ComPtr<ID3D11Texture2D> tex;
+        DX::ThrowIfFailed(device->CreateTexture2D(&desc, &initData, tex.GetAddressOf()));
+        DX::ThrowIfFailed(device->CreateShaderResourceView(tex.Get(), nullptr, m_whiteTextureSRV.ReleaseAndGetAddressOf()));
+    }
+
+    // 按钮布局：左上角、分辨率文字下面（- 在左，+ 在右）
+    {
+        const long buttonTop = static_cast<long>(20.0f + 2.0f * m_spriteFont->GetLineSpacing() + 10.0f);
+        const long buttonSize = 40;
+
+        m_btnSubRect = DirectX::SimpleMath::Rectangle(20, buttonTop, buttonSize, buttonSize);
+        m_btnAddRect = DirectX::SimpleMath::Rectangle(20 + buttonSize + 8, buttonTop, buttonSize, buttonSize);
+    }
+
+    swprintf_s(m_dolphinText, L"Dolphins: %u", m_dolphinCount);
+
     // 初始化 CPU 信息显示
     InitializeCPUInfo();
 }
@@ -759,6 +798,49 @@ void Sample::RenderFPS()
     m_spriteFont->DrawString(m_spriteBatch.get(), m_resText, resPosition + shadowOffset, DirectX::Colors::Black);
     m_spriteFont->DrawString(m_spriteBatch.get(), m_resText, resPosition, DirectX::Colors::White);
 
+    // 分辨率下面：[-] [+] 两个按钮 + 当前海豚数量
+    {
+        auto drawButton = [&](const DirectX::SimpleMath::Rectangle& r, const wchar_t* label, bool pressed, bool enabled)
+        {
+            RECT fill = { r.x, r.y, r.x + r.width, r.y + r.height };
+            RECT border = { fill.left - 1, fill.top - 1, fill.right + 1, fill.bottom + 1 };
+
+            // SpriteBatch 默认用预乘 alpha，颜色要写成 α 预乘过的值
+            XMVECTOR borderColor = enabled
+                ? (pressed ? XMVectorSet(0.90f, 0.90f, 0.90f, 0.90f) : XMVectorSet(0.45f, 0.45f, 0.45f, 0.45f))
+                : XMVectorSet(0.15f, 0.15f, 0.15f, 0.15f);
+            XMVECTOR fillColor = pressed ? XMVectorSet(0.0f, 0.0f, 0.0f, 0.60f) : XMVectorSet(0.0f, 0.0f, 0.0f, 0.30f);
+            XMVECTOR textColor = enabled ? XMVectorSet(1.0f, 1.0f, 1.0f, 1.0f) : XMVectorSet(0.35f, 0.35f, 0.35f, 0.35f);
+
+            m_spriteBatch->Draw(m_whiteTextureSRV.Get(), border, borderColor);
+            m_spriteBatch->Draw(m_whiteTextureSRV.Get(), fill, fillColor);
+
+            // 按字形实际墨迹范围居中：MeasureString 把 XOffset 算进了宽度，高度用的又是行高（42.5），直接用会偏右下
+            RECT ink = m_spriteFont->MeasureDrawBounds(label, XMFLOAT2(0.0f, 0.0f));
+            const float inkW = XMVectorGetX(m_spriteFont->MeasureString(label)) - static_cast<float>(ink.left);
+            const float inkH = static_cast<float>(ink.bottom - ink.top);
+
+            XMVECTOR pos = XMVectorSet(
+                static_cast<float>(r.x) + (static_cast<float>(r.width) - inkW) * 0.5f - static_cast<float>(ink.left),
+                static_cast<float>(r.y) + (static_cast<float>(r.height) - inkH) * 0.5f - static_cast<float>(ink.top),
+                0.0f, 0.0f);
+
+            m_spriteFont->DrawString(m_spriteBatch.get(), label, pos + shadowOffset, DirectX::Colors::Black);
+            m_spriteFont->DrawString(m_spriteBatch.get(), label, pos, textColor);
+        };
+
+        drawButton(m_btnSubRect, L"-", m_pressedButton == 2, m_dolphinCount > 1);
+        drawButton(m_btnAddRect, L"+", m_pressedButton == 1, m_dolphinCount < m_dolphins.size());
+
+        XMVECTOR countSize = m_spriteFont->MeasureString(m_dolphinText);
+        XMVECTOR countPos = XMVectorSet(
+            static_cast<float>(m_btnAddRect.x + m_btnAddRect.width + 12),
+            static_cast<float>(m_btnAddRect.y) + (static_cast<float>(m_btnAddRect.height) - XMVectorGetY(countSize)) * 0.5f,
+            0.0f, 0.0f);
+        m_spriteFont->DrawString(m_spriteBatch.get(), m_dolphinText, countPos + shadowOffset, DirectX::Colors::Black);
+        m_spriteFont->DrawString(m_spriteBatch.get(), m_dolphinText, countPos, DirectX::Colors::White);
+    }
+
     m_spriteBatch->End();
 
     // 恢复状态
@@ -767,6 +849,38 @@ void Sample::RenderFPS()
     if (oldRTV) oldRTV->Release();
     if (oldDSV) oldDSV->Release();
 
+}
+
+void Sample::AddDolphin()
+{
+    if (m_dolphinCount < m_dolphins.size())
+        m_dolphinCount++;
+}
+
+void Sample::RemoveDolphin()
+{
+    if (m_dolphinCount > 1)
+        m_dolphinCount--;
+}
+
+void Sample::OnPointerPressed(int x, int y)
+{
+    if (m_btnAddRect.Contains(x, y))
+        m_pressedButton = 1;
+    else if (m_btnSubRect.Contains(x, y))
+        m_pressedButton = 2;
+    else
+        m_pressedButton = 0;
+}
+
+void Sample::OnPointerReleased(int x, int y)
+{
+    if (m_pressedButton == 1 && m_btnAddRect.Contains(x, y))
+        AddDolphin();
+    else if (m_pressedButton == 2 && m_btnSubRect.Contains(x, y))
+        RemoveDolphin();
+
+    m_pressedButton = 0;
 }
 
 // DolphinSample.cpp - 添加 CPU 信息获取函数

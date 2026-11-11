@@ -46,6 +46,8 @@ public:
 	void OnResuming();
 	void OnWindowSizeChanged(int width, int height, DXGI_MODE_ROTATION rotation);
 	void ValidateDevice();
+	void OnPointerPressed(int x, int y);  // 指针输入（输出像素坐标）
+	void OnPointerReleased(int x, int y);
 
 	// Properties
 	void GetDefaultSize(int& width, int& height) const;
@@ -55,6 +57,8 @@ private:
     void RenderFPS();
     void RenderCPUInfo();           // 新增
     void InitializeCPUInfo();       // 新增
+    void AddDolphin();
+    void RemoveDolphin();
     void Update(DX::StepTimer const& timer);
     void Render();
 
@@ -100,7 +104,8 @@ private:
     DirectX::SimpleMath::Matrix                     m_matProj;
                                                      
     // array of dolphins                             
-    std::array<std::shared_ptr<Dolphin>, 1>         m_dolphins;
+    std::array<std::shared_ptr<Dolphin>, 4>         m_dolphins;
+    unsigned int                                    m_dolphinCount;
 
     // Seafloor object
     std::unique_ptr<DirectX::Model>                 m_seafloor;
@@ -128,6 +133,13 @@ private:
     float                                          m_fpsUpdateTimer;
     uint32_t                                       m_fpsFrameCount;
     bool                                           m_fpsEnabled;
+
+    // 海豚数量按钮
+    Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_whiteTextureSRV;
+    DirectX::SimpleMath::Rectangle                  m_btnAddRect;
+    DirectX::SimpleMath::Rectangle                  m_btnSubRect;
+    wchar_t                                         m_dolphinText[64];
+    int                                             m_pressedButton;    // 0=无, 1=加, 2=减
 
     // CPU 信息显示
     wchar_t                                        m_cpuText[256]; 

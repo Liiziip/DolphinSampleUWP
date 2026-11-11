@@ -88,6 +88,12 @@ public:
         window->Closed +=
             ref new TypedEventHandler<CoreWindow^, CoreWindowEventArgs^>(this, &ViewProvider::OnWindowClosed);
 
+        window->PointerPressed +=
+            ref new TypedEventHandler<CoreWindow^, PointerEventArgs^>(this, &ViewProvider::OnPointerPressed);
+
+        window->PointerReleased +=
+            ref new TypedEventHandler<CoreWindow^, PointerEventArgs^>(this, &ViewProvider::OnPointerReleased);
+
         auto dispatcher = CoreWindow::GetForCurrentThread()->Dispatcher;
 
         dispatcher->AcceleratorKeyActivated +=
@@ -236,6 +242,18 @@ protected:
         HandleWindowSizeChanged();
     }
 #endif
+
+    void OnPointerPressed(CoreWindow^, PointerEventArgs^ args)
+    {
+        auto position = args->CurrentPoint->Position;
+        m_sample->OnPointerPressed(ConvertDipsToPixels(position.X), ConvertDipsToPixels(position.Y));
+    }
+
+    void OnPointerReleased(CoreWindow^, PointerEventArgs^ args)
+    {
+        auto position = args->CurrentPoint->Position;
+        m_sample->OnPointerReleased(ConvertDipsToPixels(position.X), ConvertDipsToPixels(position.Y));
+    }
 
     void OnVisibilityChanged(CoreWindow^ sender, VisibilityChangedEventArgs^ args)
     {

@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities" IgnorableNamespaces="uap mp rescap">
   <mp:PhoneIdentity PhoneProductId="871c13cc-5f83-41de-8003-e9afbb6a6533" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
-  <Identity Name="871c13cc-5f83-41de-8003-e9afbb6a6533" Publisher="CN=ZIP" Version="2.0.6.0" />
+  <Identity Name="871c13cc-5f83-41de-8003-e9afbb6a6533" Publisher="CN=ZIP" Version="2.0.7.0" />
   <Properties>
     <DisplayName>DolphinSampleUWP</DisplayName>
     <PublisherDisplayName>jthecodebuilder, Joshua-Ashton &amp; contrib. Originally by Xbox ATG</PublisherDisplayName>
